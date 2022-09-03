@@ -112,6 +112,7 @@ namespace ThronebreakerFix
                 if (__instance.m_PostProcessLayer != null)
                 {
                     __instance.m_PostProcessLayer.antialiasingMode = antiAliasing;
+                    Log.LogInfo($"Antialiasing: Set camera anti-aliasing type to {antiAliasing}.");
                 }
 
             }
