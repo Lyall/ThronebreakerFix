@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>ThronebreakerFix</AssemblyName>
+    <Description>ThronebreakerFix</Description>
+    <Version>0.0.1</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.IL2CPP" Version="6.0.0-*" IncludeAssets="compile" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
+    <PackageReference Include="UnityEngine.Modules" Version="2019.4.17">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>libs\Assembly-CSharp.stripped.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>libs\Assembly-CSharp-firstpass.stripped.dll</HintPath>
+    </Reference>
+    <Reference Include="Code.Plugins.RedToolkit">
+      <HintPath>libs\Code.Plugins.RedToolkit.stripped.dll</HintPath>
+    </Reference>
+    <Reference Include="Code.Plugins.Utils">
+      <HintPath>libs\Code.Plugins.Utils.stripped.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>libs\Il2Cppmscorlib.stripped.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>libs\UnityEngine.CoreModule.stripped.dll</HintPath>
+    </Reference>
+	<Reference Include="UnityEngine.UI">
+      <HintPath>libs\UnityEngine.UI.stripped.dll</HintPath>
+	</Reference>
+	<Reference Include="UnityEngine.UIModule">
+	  <HintPath>libs\UnityEngine.UIModule.stripping.dll</HintPath>
+	</Reference>
+  </ItemGroup>
+</Project>
