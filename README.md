@@ -5,6 +5,8 @@
 This BepInEx plugin for the game Thronebreaker features:
 - Ultrawide support with pillarbox removal.
 - Intro/logos skip.
+- Graphical tweaks.
+  - Anti-Aliasing (FXAA/SMAA/TAA)
 
 ## Installation
 - Grab the latest release of ThronebreakerFix from [here.](https://github.com/Lyall/ThronebreakerFix/releases)
