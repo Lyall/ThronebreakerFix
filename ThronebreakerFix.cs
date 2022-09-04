@@ -95,17 +95,6 @@ namespace ThronebreakerFix
         [HarmonyPatch]
         public class SettingsPatch
         {
-
-            // Force cursor on
-            // DEBUG
-            // REMOVE ON RELEASE
-            [HarmonyPatch(typeof(Cursor), nameof(Cursor.visible), MethodType.Setter)]
-            [HarmonyPrefix]
-            public static bool ForceCursorOn()
-            {
-                return false;
-            }
-
             [HarmonyPatch(typeof(GwentUnity.CameraAntiAliasingController), nameof(GwentUnity.CameraAntiAliasingController.Init))]
             [HarmonyPostfix]
             public static void ChangeAA(GwentUnity.CameraAntiAliasingController __instance)
