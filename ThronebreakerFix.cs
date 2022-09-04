@@ -4,9 +4,7 @@ using BepInEx.IL2CPP;
 using BepInEx.Logging;
 using HarmonyLib;
 
-using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace ThronebreakerFix
 {
@@ -45,7 +43,7 @@ namespace ThronebreakerFix
                                 "Anti-Aliasing",
                                 "None",
                                 new ConfigDescription("Set desired anti-aliasing type.",
-                                new AcceptableValueList<string>("None", "FXAA", "SMAA", "TAA"))); // Others are broken/invalid
+                                new AcceptableValueList<string>("None", "FXAA", "SMAA", "TAA")));
 
             // Custom Resolution
             bCustomResolution = Config.Bind("Set Custom Resolution",
@@ -97,6 +95,17 @@ namespace ThronebreakerFix
         [HarmonyPatch]
         public class SettingsPatch
         {
+
+            // Force cursor on
+            // DEBUG
+            // REMOVE ON RELEASE
+            [HarmonyPatch(typeof(Cursor), nameof(Cursor.visible), MethodType.Setter)]
+            [HarmonyPrefix]
+            public static bool ForceCursorOn()
+            {
+                return false;
+            }
+
             [HarmonyPatch(typeof(GwentUnity.CameraAntiAliasingController), nameof(GwentUnity.CameraAntiAliasingController.Init))]
             [HarmonyPostfix]
             public static void ChangeAA(GwentUnity.CameraAntiAliasingController __instance)
@@ -114,7 +123,6 @@ namespace ThronebreakerFix
                     __instance.m_PostProcessLayer.antialiasingMode = antiAliasing;
                     Log.LogInfo($"Antialiasing: Set camera anti-aliasing type to {antiAliasing}.");
                 }
-
             }
         }
 
@@ -136,16 +144,6 @@ namespace ThronebreakerFix
             public static float NewAspectRatio = (float)fDesiredResolutionX.Value / fDesiredResolutionY.Value;
             public static float AspectMultiplier = NewAspectRatio / DefaultAspectRatio;
             public static float AspectDivider = DefaultAspectRatio / NewAspectRatio;
-
-            // Force cursor on
-            // DEBUG
-            // REMOVE ON RELEASE
-            [HarmonyPatch(typeof(Cursor), nameof(Cursor.visible), MethodType.Setter)]
-            [HarmonyPrefix]
-            public static bool ForceCursorOn()
-            {
-                return false;
-            }
 
             // Fix UI Camera aspect ratio
             [HarmonyPatch(typeof(GwentUnity.AspectRatioManager), nameof(GwentUnity.AspectRatioManager.SetupAspectRatio))]
@@ -182,6 +180,24 @@ namespace ThronebreakerFix
                 return true;
             }
 
+            // Load more grid squares
+            [HarmonyPatch(typeof(GwentUnity.GridManager), nameof(GwentUnity.GridManager.LoadGridSquaresForCurrentTrackedPosition))]
+            [HarmonyPrefix]
+            public static bool LoadMoreGridSquares(GwentUnity.GridManager __instance)
+            {
+                if (NewAspectRatio > 2.39f)
+                {
+                    __instance.m_CurrentGridSquareLoadLevel = GwentUnity.GridManager.EGridSquareLoadLevel.Level1ZoomedOut;
+                    Log.LogInfo($"GridLoadFix: Set GridSquareLoadLevel to {__instance.m_CurrentGridSquareLoadLevel}.");
+                }
+                if (NewAspectRatio > 4.79f)
+                {
+                    __instance.m_CurrentGridSquareLoadLevel = GwentUnity.GridManager.EGridSquareLoadLevel.Level2ZoomedOut;
+                    Log.LogInfo($"GridLoadFix: Set GridSquareLoadLevel to {__instance.m_CurrentGridSquareLoadLevel}.");
+                }
+                return true;
+            }
+
             // Fix screen size UI camera render textures
             [HarmonyPatch(typeof(GwentUnity.RenderTextureAssociator), nameof(GwentUnity.RenderTextureAssociator.Associate))]
             [HarmonyPostfix]
@@ -213,14 +229,18 @@ namespace ThronebreakerFix
             [HarmonyPostfix]
             public static void RemoveExplorationBG(GwentVisuals.Campaign.Weather __instance)
             {
-                var overlays = __instance.Overlays;
-                foreach (var overlay in overlays)
+                if (NewAspectRatio > 2.39f)
                 {
-                    var overlayScale = overlay.transform.localScale;
-                    overlay.transform.localScale = new Vector2(overlayScale.x * AspectMultiplier, overlayScale.y);
-                    overlayScale = new Vector2(0f,0f);
-                    Log.LogInfo($"Weather: Resized weather overlay - {overlay.name}.");
-                }
+                    var overlays = __instance.Overlays;
+                    foreach (var overlay in overlays)
+                    {
+                        var overlayScale = overlay.transform.localScale;
+                        float multiplier = (float)NewAspectRatio / 2.4f;
+                        overlay.transform.localScale = new Vector2(overlayScale.x * multiplier, overlayScale.y);
+                        overlayScale = new Vector2(0f, 0f);
+                        Log.LogInfo($"Weather: Resized weather overlay - {overlay.name}.");
+                    }
+                }   
             }
 
             // Fix marker offset

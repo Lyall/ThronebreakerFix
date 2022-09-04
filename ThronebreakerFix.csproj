@@ -25,9 +25,6 @@
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>libs\Assembly-CSharp-firstpass.stripped.dll</HintPath>
     </Reference>
-    <Reference Include="Code.Plugins.RedToolkit">
-      <HintPath>libs\Code.Plugins.RedToolkit.stripped.dll</HintPath>
-    </Reference>
     <Reference Include="Code.Plugins.Utils">
       <HintPath>libs\Code.Plugins.Utils.stripped.dll</HintPath>
     </Reference>
@@ -40,14 +37,8 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>libs\UnityEngine.CoreModule.stripped.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>libs\UnityEngine.PhysicsModule.stripped.dll</HintPath>
-    </Reference>
 	<Reference Include="UnityEngine.UI">
       <HintPath>libs\UnityEngine.UI.stripped.dll</HintPath>
-	</Reference>
-	<Reference Include="UnityEngine.UIModule">
-	  <HintPath>libs\UnityEngine.UIModule.stripping.dll</HintPath>
 	</Reference>
 	<Reference Include="UnityEngine.VideoModule">
 	  <HintPath>libs\UnityEngine.VideoModule.stripped.dll</HintPath>
