@@ -2,9 +2,11 @@
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W01UAI9)</br>
 [![Github All Releases](https://img.shields.io/github/downloads/Lyall/ThronebreakerFix/total.svg)](https://github.com/Lyall/ThronebreakerFix/releases)
 
-This BepInEx plugin for the game Thronebreaker features:
+This BepInEx plugin for the game Thronebreaker: The Witcher Tales features:
 - Ultrawide support with pillarbox removal.
 - Intro/logos skip.
+- Graphical tweaks.
+  - Anti-Aliasing (FXAA/SMAA/TAA)
 
 ## Installation
 - Grab the latest release of ThronebreakerFix from [here.](https://github.com/Lyall/ThronebreakerFix/releases)
