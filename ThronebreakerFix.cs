@@ -5,6 +5,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ThronebreakerFix
 {
@@ -13,13 +14,23 @@ namespace ThronebreakerFix
     {
         internal static new ManualLogSource Log;
 
+        // Features
         public static ConfigEntry<bool> bUltrawideFixes;
+        public static ConfigEntry<bool> bIntroSkip;
+#if DEBUG
+        public static ConfigEntry<bool> bSpannedUI;
+#endif
+
+        // Custom Resolution
         public static ConfigEntry<bool> bCustomResolution;
         public static ConfigEntry<float> fDesiredResolutionX;
         public static ConfigEntry<float> fDesiredResolutionY;
         public static ConfigEntry<bool> bFullscreen;
-        public static ConfigEntry<bool> bIntroSkip;
+
+        // Graphics
         public static ConfigEntry<string> sAAType;
+
+
 
         public override void Load()
         {
@@ -37,7 +48,12 @@ namespace ThronebreakerFix
                                 "IntroSkip",
                                  true,
                                 "Skip intro logos.");
-
+#if DEBUG
+            bSpannedUI = Config.Bind("Features",
+                                "SpannedUI",
+                                 false,
+                                "Set to true for spanned UI.");
+#endif
             // Graphics
             sAAType = Config.Bind("Graphics",
                                 "Anti-Aliasing",
@@ -81,6 +97,12 @@ namespace ThronebreakerFix
                 Harmony.CreateAndPatchAll(typeof(UltrawidePatch));
             }
 
+            // Run SpannedUIPatch
+            if (bSpannedUI.Value)
+            {
+                Harmony.CreateAndPatchAll(typeof(SpannedUIPatch));
+            }
+
             // Run IntroSkipPatch
             if (bIntroSkip.Value)
             {
@@ -95,6 +117,16 @@ namespace ThronebreakerFix
         [HarmonyPatch]
         public class SettingsPatch
         {
+#if DEBUG
+            // Cursor lock for debugging
+            [HarmonyPatch(typeof(Cursor), nameof(Cursor.visible), MethodType.Setter)]
+            [HarmonyPrefix]
+            public static bool ForceCursorOn()
+            {
+                return false;
+            }
+#endif
+
             [HarmonyPatch(typeof(GwentUnity.CameraAntiAliasingController), nameof(GwentUnity.CameraAntiAliasingController.Init))]
             [HarmonyPostfix]
             public static void ChangeAA(GwentUnity.CameraAntiAliasingController __instance)
@@ -129,10 +161,14 @@ namespace ThronebreakerFix
         [HarmonyPatch]
         public class UltrawidePatch
         {
+            // Aspect Ratio
             public static float DefaultAspectRatio = (float)16 / 9;
             public static float NewAspectRatio = (float)fDesiredResolutionX.Value / fDesiredResolutionY.Value;
             public static float AspectMultiplier = NewAspectRatio / DefaultAspectRatio;
             public static float AspectDivider = DefaultAspectRatio / NewAspectRatio;
+
+            public static Vector2 NativeCanvasSize = new Vector2((float)1600, (float)900);
+            public static Vector2 NewCanvasSize = new Vector2((float)1600 * AspectMultiplier, (float)900);
 
             // Fix UI Camera aspect ratio
             [HarmonyPatch(typeof(GwentUnity.AspectRatioManager), nameof(GwentUnity.AspectRatioManager.SetupAspectRatio))]
@@ -169,6 +205,36 @@ namespace ThronebreakerFix
                 return true;
             }
 
+            // Fix screen size UI camera render textures
+            [HarmonyPatch(typeof(GwentUnity.RenderTextureAssociator), nameof(GwentUnity.RenderTextureAssociator.Associate))]
+            [HarmonyPostfix]
+            public static void RenTex2(GwentUnity.RenderTextureAssociator __instance)
+            {
+                if (__instance.GetComponent<RectTransform>() != null)
+                {
+                    var transform = __instance.GetComponent<RectTransform>();
+                    if (transform != null & transform.sizeDelta == NativeCanvasSize)
+                    {
+                        transform.sizeDelta = NewCanvasSize;
+                        Log.LogInfo($"ScreenSizeTexture: Resized - {transform.name}.");
+                    }
+                }
+            }
+
+
+            // Fix canteen/dialog render textures
+            [HarmonyPatch(typeof(GwentUnity.Stage), nameof(GwentUnity.Stage.SetRenderTextureImageTarget))]
+            [HarmonyPostfix]
+            public static void RenTex3(GwentUnity.Stage __instance, ref RawImage __0)
+            {
+                // Check if screen size render texture
+                if (__instance.m_RenderTexture.width == (int)fDesiredResolutionX.Value)
+                {
+                    __0.gameObject.transform.localScale = new Vector3((float)1 * AspectMultiplier, 1f, 1f);
+                    Log.LogInfo($"SetRenderTextureImageTarget: Resize: rawImageTarget = {__instance.m_RawImageTarget.gameObject.name}, rawImage = {__0.gameObject.name}, renTex = {__instance.m_RenderTexture.name}.");
+                }
+            }
+
             // Load more grid squares
             [HarmonyPatch(typeof(GwentUnity.GridManager), nameof(GwentUnity.GridManager.LoadGridSquaresForCurrentTrackedPosition))]
             [HarmonyPrefix]
@@ -185,22 +251,6 @@ namespace ThronebreakerFix
                     Log.LogInfo($"GridLoadFix: Set GridSquareLoadLevel to {__instance.m_CurrentGridSquareLoadLevel}.");
                 }
                 return true;
-            }
-
-            // Fix screen size UI camera render textures
-            [HarmonyPatch(typeof(GwentUnity.RenderTextureAssociator), nameof(GwentUnity.RenderTextureAssociator.Associate))]
-            [HarmonyPostfix]
-            public static void RenTex2(GwentUnity.RenderTextureAssociator __instance)
-            {
-                if (__instance.GetComponent<RectTransform>() != null)
-                {
-                    var transform = __instance.GetComponent<RectTransform>();
-                    if (transform != null & transform.sizeDelta == new Vector2(1600f, 900f))
-                    {
-                        transform.sizeDelta = new Vector2((float)1600 * AspectMultiplier, (float)900);
-                        Log.LogInfo($"ScreenSizeTexture: Resized - {transform.name}.");
-                    }
-                }        
             }
 
             // Remove background from exploration buttons
@@ -229,7 +279,7 @@ namespace ThronebreakerFix
                         overlayScale = new Vector2(0f, 0f);
                         Log.LogInfo($"Weather: Resized weather overlay - {overlay.name}.");
                     }
-                }   
+                }
             }
 
             // Fix marker offset
@@ -239,6 +289,22 @@ namespace ThronebreakerFix
             {
                 __instance.m_PanelRectSize = GameObject.Find("MainCanvas").GetComponent<RectTransform>().sizeDelta;
                 Log.LogInfo($"MarkerFix: Adjusted panel rect size - {__instance.gameObject.name}");
+            }
+
+            // Widen letterboxing in cutscenes
+            [HarmonyPatch(typeof(GwentVisuals.Campaign.CinematicModeBarsView), nameof(GwentVisuals.Campaign.CinematicModeBarsView.RefreshHiddenPosition))]
+            [HarmonyPostfix]
+            public static void LetterboxingStretch(GwentVisuals.Campaign.CinematicModeBarsView __instance)
+            {
+                var top = __instance.m_TopBar;
+                var bottom = __instance.m_BottomBar;
+
+                if (top && bottom)
+                {
+                    top.localScale = new Vector3((float)1 * AspectMultiplier, 1f, 1f);
+                    bottom.localScale = new Vector3((float)1 * AspectMultiplier, 1f, 1f);
+                    Log.LogInfo($"LetterboxingFix: Widened letterboxing.");
+                }
             }
 
             // Fix video playback
@@ -254,13 +320,19 @@ namespace ThronebreakerFix
         [HarmonyPatch]
         public class IntroSkipPatch
         {
+            public static bool bAutosaveRunOnce = false;
+
             // Skip autosave notice at start
             [HarmonyPatch(typeof(GwentUnity.UISaveNotificationPanel), nameof(GwentUnity.UISaveNotificationPanel.HandleShown))]
             [HarmonyPostfix]
             public static void SkipAutosaveNotice(GwentUnity.UISaveNotificationPanel __instance)
             {
-                __instance.HandleHidden();
-                Log.LogInfo($"IntroSkip: Skipped autosave notification.");
+                if (bAutosaveRunOnce)
+                {
+                    __instance.HandleHidden();
+                    Log.LogInfo($"IntroSkip: Skipped autosave notification.");
+                    bAutosaveRunOnce = true;
+                }
             }
 
             // Skip intro
@@ -273,5 +345,32 @@ namespace ThronebreakerFix
                 Log.LogInfo($"IntroSkip: Skipped intro.");
             }
         }
+#if DEBUG
+        [HarmonyPatch]
+        public class SpannedUIPatch
+        {
+            // Aspect Ratio
+            public static float DefaultAspectRatio = (float)16 / 9;
+            public static float NewAspectRatio = (float)fDesiredResolutionX.Value / fDesiredResolutionY.Value;
+            public static float AspectMultiplier = NewAspectRatio / DefaultAspectRatio;
+            public static float AspectDivider = DefaultAspectRatio / NewAspectRatio;
+
+            [HarmonyPatch(typeof(GwentUnity.OverlayCanvasScaler), nameof(GwentUnity.OverlayCanvasScaler.Start))]
+            [HarmonyPostfix]
+            public static void ChangeAA(GwentUnity.OverlayCanvasScaler __instance)
+            {
+                var rects = __instance.GetComponentsInChildren<RectTransform>(true);
+                foreach (var rect in rects)
+                {
+                    if (rect.sizeDelta == new Vector2((float)1600, (float)900))
+                    {
+                        rect.sizeDelta = new Vector2((float)1600 * AspectMultiplier, (float)900);
+                        Log.LogInfo($"SpannedUI: Resized {rect.name}");
+                    }
+                }
+            }
+
+        }
+#endif
     }
 }
