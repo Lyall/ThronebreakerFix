@@ -19,6 +19,7 @@ This BepInEx plugin for the game Thronebreaker: The Witcher Tales features:
 
 ## Known Issues
 Please report any issues you see.
+- Camp canteen is currently squashed.
 
 ## Screenshots
 |  ![ezgif-2-38760a88c7](https://user-images.githubusercontent.com/695941/188274104-fe74b8d6-36c6-4d9c-84f3-b439ddd99c17.gif) |
