@@ -97,11 +97,13 @@ namespace ThronebreakerFix
                 Harmony.CreateAndPatchAll(typeof(UltrawidePatch));
             }
 
+#if DEBUG
             // Run SpannedUIPatch
             if (bSpannedUI.Value)
             {
                 Harmony.CreateAndPatchAll(typeof(SpannedUIPatch));
             }
+#endif
 
             // Run IntroSkipPatch
             if (bIntroSkip.Value)
