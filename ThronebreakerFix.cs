@@ -223,7 +223,6 @@ namespace ThronebreakerFix
                 }
             }
 
-
             // Fix canteen/dialog render textures
             [HarmonyPatch(typeof(GwentUnity.Stage), nameof(GwentUnity.Stage.SetRenderTextureImageTarget))]
             [HarmonyPostfix]
@@ -316,6 +315,15 @@ namespace ThronebreakerFix
             {
                 __instance.m_MoviePlayer.m_Player.aspectRatio = UnityEngine.Video.VideoAspectRatio.FitVertically;
                 Log.LogInfo($"VideoFix: Set aspect ratio to FitVertically - {__instance.m_MoviePlayer.MovieName}.");
+            }
+
+            // Fix tutorial videos
+            [HarmonyPatch(typeof(GwentVisuals.UITutorialVideoPlayer), nameof(GwentVisuals.UITutorialVideoPlayer.PrepareAndPlayVideo))]
+            [HarmonyPostfix]
+            public static void FixTutorialVideos(GwentVisuals.UITutorialVideoPlayer __instance, ref string __0)
+            {
+                __instance.m_VideoPlayerComponent.aspectRatio = UnityEngine.Video.VideoAspectRatio.Stretch;
+                Log.LogInfo($"TutorialVideosFix: Set aspect ratio to Stretch - {__0}.");
             }
         }
 
