@@ -236,22 +236,27 @@ namespace ThronebreakerFix
                 }
             }
 
-            // Load more grid squares
-            [HarmonyPatch(typeof(GwentUnity.GridManager), nameof(GwentUnity.GridManager.LoadGridSquaresForCurrentTrackedPosition))]
-            [HarmonyPrefix]
-            public static bool LoadMoreGridSquares(GwentUnity.GridManager __instance)
+            // Load more grid squares horizontally
+            [HarmonyPatch(typeof(GwentUnity.GridManager), nameof(GwentUnity.GridManager.GetNumGridSquaresToLoadInXFromLoadLevel))]
+            [HarmonyPostfix]
+            public static void LoadMoreGridSquares(GwentUnity.GridManager __instance, ref int __result)
             {
-                if (NewAspectRatio > 2.39f)
+                int numGridSquares = __result;
+
+                if (NewAspectRatio > 3f)
                 {
-                    __instance.m_CurrentGridSquareLoadLevel = GwentUnity.GridManager.EGridSquareLoadLevel.Level1ZoomedOut;
-                    Log.LogInfo($"GridLoadFix: Set GridSquareLoadLevel to {__instance.m_CurrentGridSquareLoadLevel}.");
+                    __result = numGridSquares + 1;
                 }
-                if (NewAspectRatio > 4.79f)
+                if (NewAspectRatio > 4f)
                 {
-                    __instance.m_CurrentGridSquareLoadLevel = GwentUnity.GridManager.EGridSquareLoadLevel.Level2ZoomedOut;
-                    Log.LogInfo($"GridLoadFix: Set GridSquareLoadLevel to {__instance.m_CurrentGridSquareLoadLevel}.");
+                    __result = numGridSquares + 2;
                 }
-                return true;
+                if (NewAspectRatio > 5f)
+                {
+                    __result = numGridSquares + 3;
+                }
+
+                Log.LogInfo($"LoadMoreGridSquares: numGridSquares: Old = {numGridSquares}, New = {__result}.");
             }
 
             // Remove background from exploration buttons
@@ -262,6 +267,16 @@ namespace ThronebreakerFix
                 var bg = __instance.gameObject.transform.FindChild("Background");
                 bg.gameObject.SetActive(false);
                 Log.LogInfo($"ExplorationButtons: Disabled background.");
+            }
+
+            // Remove background from battle board
+            [HarmonyPatch(typeof(GwentVisuals.UIBattleBoardInfosWidget), nameof(GwentVisuals.UIBattleBoardInfosWidget.OnGameStarted))]
+            [HarmonyPostfix]
+            public static void RemoveBattleBoardBG(GwentVisuals.UIBattleBoardInfosWidget __instance)
+            {
+                var bg = __instance.gameObject.transform.FindChild("Background");
+                bg.gameObject.SetActive(false);
+                Log.LogInfo($"BattleBoard: Disabled background.");
             }
 
             // Widen weather overlay
@@ -330,7 +345,7 @@ namespace ThronebreakerFix
         [HarmonyPatch]
         public class IntroSkipPatch
         {
-            public static bool bAutosaveRunOnce = false;
+            public static bool bAutosaveRunOnce = true;
 
             // Skip autosave notice at start
             [HarmonyPatch(typeof(GwentUnity.UISaveNotificationPanel), nameof(GwentUnity.UISaveNotificationPanel.HandleShown))]
@@ -341,7 +356,7 @@ namespace ThronebreakerFix
                 {
                     __instance.HandleHidden();
                     Log.LogInfo($"IntroSkip: Skipped autosave notification.");
-                    bAutosaveRunOnce = true;
+                    bAutosaveRunOnce = false;
                 }
             }
 
